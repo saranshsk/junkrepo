@@ -1,0 +1,149 @@
+Creation of Table all states:
+create table allstates(id1 int, id2 int,statename string, smallcode string,id3 int, id4 int)
+row format delimited
+fields terminated by ',';
+
+Loading data into created table all states:
+Load data local inpath '/home/hadoop/allstates.csv' into table allstates;
+or
+hadoop fs -copyFromLocal /home/hadoop/allstates.csv /user/hive/warehouse/allstates
+
+Creation of partition table:
+create table allstates_part(id1 int, id2 int, smallcode string,id3 int, id4 int) PARTITIONED BY(statename string);
+
+For partition we have to set this property:
+set hive.exec.dynamic.partition.mode=nonstrict;
+
+Loading data into partition table:
+INSERT OVERWRITE TABLE allstates_part PARTITION(statename) SELECT id1, id2, statename, smallcode, id3, id4 from  allstates;
+
+
+
+Caused by: org.apache.hadoop.hive.ql.metadata.HiveFatalException: [Error 20004]: Fatal error occurred when node tried to create too many dynamic partitions. The maximum number of dynamic partitions is controlled by hive.exec.max.dynamic.partitions and hive.exec.max.dynamic.partitions.pernode. Maximum was set to 100 partitions per node, number of dynamic partitions on this node: 101
+	at org.apache.hadoop.hive.ql.exec.FileSinkOperator.getDynOutPaths(FileSinkOperator.java:933)
+	at org.apache.hadoop.hive.ql.exec.FileSinkOperator.process(FileSinkOperator.java:704)
+	at org.apache.hadoop.hive.ql.exec.Operator.forward(Operator.java:897)
+	at org.apache.hadoop.hive.ql.exec.SelectOperator.process(SelectOperator.java:95)
+	at org.apache.hadoop.hive.ql.exec.Operator.forward(Operator.java:897)
+	at org.apache.hadoop.hive.ql.exec.TableScanOperator.process(TableScanOperator.java:130)
+	at org.apache.hadoop.hive.ql.exec.MapOperator$MapOpCtx.forward(MapOperator.java:149)
+	at org.apache.hadoop.hive.ql.exec.MapOperator.process(MapOperator.java:489)
+	... 9 more
+
+SET hive.exec.max.dynamic.partitions=100000;
+SET hive.exec.max.dynamic.partitions.pernode=100000;
+
+
+
+2018-04-22 18:54:54,066 INFO [Socket Reader #1 for port 40280] SecurityLogger.org.apache.hadoop.ipc.Server: Auth successful for job_1524284725631_0017 (auth:SIMPLE)
+2018-04-22 18:54:54,110 INFO [IPC Server handler 0 on 40280] org.apache.hadoop.mapred.TaskAttemptListenerImpl: JVM with ID : jvm_1524284725631_0017_m_000002 asked for a task
+2018-04-22 18:54:54,110 INFO [IPC Server handler 0 on 40280] org.apache.hadoop.mapred.TaskAttemptListenerImpl: JVM with ID: jvm_1524284725631_0017_m_000002 given task: attempt_1524284725631_0017_m_000000_0
+2018-04-22 18:55:04,991 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Received completed container container_1524284725631_0017_01_000002
+2018-04-22 18:55:04,994 INFO [AsyncDispatcher event handler] org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: Diagnostics report from attempt_1524284725631_0017_m_000000_0: Container [pid=22184,containerID=container_1524284725631_0017_01_000002] is running beyond virtual memory limits. Current usage: 132.1 MB of 1 GB physical memory used; 2.2 GB of 2.1 GB virtual memory used. Killing container.
+Dump of the process-tree for container_1524284725631_0017_01_000002 :
+	|- PID PPID PGRPID SESSID CMD_NAME USER_MODE_TIME(MILLIS) SYSTEM_TIME(MILLIS) VMEM_USAGE(BYTES) RSSMEM_USAGE(PAGES) FULL_CMD_LINE
+	|- 22190 22184 22184 22184 (java) 882 112 2398670848 33115 /usr/lib/jvm/java-1.8.0-openjdk-amd64/bin/java -Djava.net.preferIPv4Stack=true -Dhadoop.metrics.log.level=WARN -Xmx200m -Djava.io.tmpdir=/tmp/hadoop-hadoop/nm-local-dir/usercache/hadoop/appcache/application_1524284725631_0017/container_1524284725631_0017_01_000002/tmp -Dlog4j.configuration=container-log4j.properties -Dyarn.app.container.log.dir=/usr/local/hadoop/logs/userlogs/application_1524284725631_0017/container_1524284725631_0017_01_000002 -Dyarn.app.container.log.filesize=0 -Dhadoop.root.logger=INFO,CLA -Dhadoop.root.logfile=syslog org.apache.hadoop.mapred.YarnChild 192.168.1.3 40280 attempt_1524284725631_0017_m_000000_0 2 
+	|- 22184 22182 22184 22184 (bash) 0 0 17154048 707 /bin/bash -c /usr/lib/jvm/java-1.8.0-openjdk-amd64/bin/java -Djava.net.preferIPv4Stack=true -Dhadoop.metrics.log.level=WARN  -Xmx200m -Djava.io.tmpdir=/tmp/hadoop-hadoop/nm-local-dir/usercache/hadoop/appcache/application_1524284725631_0017/container_1524284725631_0017_01_000002/tmp -Dlog4j.configuration=container-log4j.properties -Dyarn.app.container.log.dir=/usr/local/hadoop/logs/userlogs/application_1524284725631_0017/container_1524284725631_0017_01_000002 -Dyarn.app.container.log.filesize=0 -Dhadoop.root.logger=INFO,CLA -Dhadoop.root.logfile=syslog org.apache.hadoop.mapred.YarnChild 192.168.1.3 40280 attempt_1524284725631_0017_m_000000_0 2 1>/usr/local/hadoop/logs/userlogs/application_1524284725631_0017/container_1524284725631_0017_01_000002/stdout 2>/usr/local/hadoop/logs/userlogs/application_1524284725631_0017/container_1524284725631_0017_01_000002/stderr  
+
+Container killed on request. Exit code is 143
+Container exited with a non-zero exit code 143
+
+
+
+hadoop@namenode1:/usr/local/hive/bin$ hadoop fs -copyFromLocal /home/hadoop/allstates.csv /user/hive/warehouse/allstates
+18/04/22 19:08:50 INFO hdfs.DataStreamer: Exception in createBlockOutputStream
+java.io.IOException: Got error, status=ERROR, status message , ack with firstBadLink as 192.168.1.6:50010
+	at org.apache.hadoop.hdfs.protocol.datatransfer.DataTransferProtoUtil.checkBlockOpStatus(DataTransferProtoUtil.java:118)
+	at org.apache.hadoop.hdfs.DataStreamer.createBlockOutputStream(DataStreamer.java:1643)
+	at org.apache.hadoop.hdfs.DataStreamer.nextBlockOutputStream(DataStreamer.java:1547)
+	at org.apache.hadoop.hdfs.DataStreamer.run(DataStreamer.java:658)
+18/04/22 19:08:50 WARN hdfs.DataStreamer: Abandoning BP-1188812031-192.168.1.2-1524194376942:blk_1073743318_2495
+18/04/22 19:08:50 WARN hdfs.DataStreamer: Excluding datanode DatanodeInfoWithStorage[192.168.1.6:50010,DS-d96dbf0f-fd40-4d44-aed7-230c585b01fd,DISK]
+
+
+
+
+
+
+hadoop@namenode1:/usr/local/hive/bin$ hadoop fs -ls /user/hive/warehouse/allstates_part/
+Found 64 items
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=ANAHEIM
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=ANTIOCH
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=ATLANTA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=AURORA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=BALDWIN PARK
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=BELL GARDENS
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=BRONX
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=BROOKLYN
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=BROWNSVILLE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CHARLOTTE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CHICAGO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CHINO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CHINO HILLS
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CHULA VISTA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CICERO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CORONA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=CYPRESS
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=DALLAS
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=EL PASO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=ELMHURST
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=FLUSHING
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=FONTANA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=FOREST HILLS
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=FRISCO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=GRAND PRAIRIE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=HAWTHORNE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=HIALEAH
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=HOUSTON
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=HUNTINGTON STATION
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=KATY
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=KELLER
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=LA PUENTE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=LAWRENCEVILLE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=LEAGUE CITY
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=LONG BEACH
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=LOS ANGELES
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=MCKINNEY
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=NEW YORK
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=NORWALK
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=OLATHE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=OXNARD
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=PACOIMA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=PARKVILLE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=PITTSBURG
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=RIDGEWOOD
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=RIVERSIDE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SAINT PETERS
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SAN DIEGO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SAN FRANCISCO
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SANTA ANA
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SIMI VALLEY
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SOUTH GATE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SPRING
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=STATEN ISLAND
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SUGAR LAND
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=SYLMAR
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=UNION CITY
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=VIRGINIA BEACH
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=WAIPAHU
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=WATSONVILLE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=WESTMINSTER
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=WOODBRIDGE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=WOODSIDE
+drwxr-xr-x   - hadoop supergroup          0 2018-04-22 19:11 /user/hive/warehouse/allstates_part/statename=statename
+hadoop@namenode1:/usr/local/hive/bin$ 
+
+
+
+
+
+Error: Error while processing statement: FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.mr.MapRedTask. Permission denied: user=hiveuser, access=EXECUTE, inode="/tmp/hadoop-yarn":hadoop:supergroup:drwx------
+
+
+Error: Error while compiling statement: FAILED: SemanticException [Error 10294]: Attempt to do update or delete using transaction manager that does not support these operations. (state=42000,code=10294)
+
+
+
+
+
+

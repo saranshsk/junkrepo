@@ -1,0 +1,8 @@
+
+
+
+#####Starting and stoping hadoop datanode services from datanode or namenode machine:
+. /usr/local/hadoop/sbin/yarn-daemon.sh stop nodemanager
+. /usr/local/hadoop/sbin/hadoop-daemon.sh stop datanode
+. /usr/local/hadoop/sbin/hadoop-daemon.sh start datanode
+. /usr/local/hadoop/sbin/yarn-daemon.sh start nodemanager

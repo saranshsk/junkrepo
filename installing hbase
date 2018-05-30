@@ -1,0 +1,142 @@
+We will configure our cluster to host the HBase Master Server in our NameNode & Region Servers in our DataNodes. Also Apache Zookeeper is a pre-requisite for HBase installation. In this case we will configure HBase, to manage its own instance of Zookeeper. We will configure the NameNode to host the Zookeeper Quorum. So let ssh & login to our NameNode.
+Master Server Setup
+
+Get the Latest Stable Release of HBase Package from the site:
+http://www-us.apache.org/dist/hbase/stable
+In the time of writing this article, HBase 1.2.3 is the latest stable version. We will install HBase under /usr/local/ directory.
+wget http://www-us.apache.org/dist/hbase/stable/hbase-1.2.6-bin.tar.gz
+hadoop@namenode1:~$ tar -xvzf /softwares/hbase-1.2.6-bin.tar.gz
+hadoop@namenode1:~$ sudo mv hbase-1.2.6/ /usr/local/hbase
+hadoop@namenode1:~$ sudo chmod -R 775 /usr/local/hbase/
+hadoop@namenode1:~$ sudo chown -R hadoop /usr/local/hbase/
+
+Additionally we will create a local directory for Zookeper to maintain it's log file.
+hadoop@namenode1:/usr/local/hbase/conf$ sudo mkdir -p /usr/local/zookeeper
+hadoop@namenode1:/usr/local/hbase/conf$ sudo chmod -R 775 /usr/local/zookeeper
+hadoop@namenode1:/usr/local/hbase/conf$ sudo chown -R hadoop /usr/local/zookeeper
+
+Create the below directory on all the machines:
+hadoop@namenode1:/usr/local/hbase$ sudo mkdir /var/hbase/
+hadoop@namenode1:/usr/local/hbase$ sudo mkdir /var/hbase/pids
+hadoop@namenode1:/usr/local/hbase$ sudo chown -R hadoop /var/hbase/pids
+hadoop@namenode1:/usr/local/hbase$ sudo chmod -R 775 /var/hbase/pids
+
+Make a new /hbase directory in HDFS(hadoop fs -mkdir /hbase)
+Make a new /zookeeper directory in HDFS(hadoop fs -mkdir /zookeeper)
+
+Delete the file /usr/local/hbase/lib/slf4j-log4j12-1.7.5.jar under directory /usr/local/hbase/lib/ since it is already present under hadoop libraries.
+
+Set the HBase environment variables in .bashrc file. Append below lines to the file and source the environment file.
+vi ~/.bashrc
+export HBASE_HOME=/usr/local/hbase
+export PATH=$PATH:$HBASE_HOME/bin
+export CLASSPATH=$CLASSPATH:/usr/local/hbase/lib/*:.
+Save and exit the above file from editor and execute the below command to source the environment file
+source ~/.bashrc
+
+Next we need to configure HBase environment script and set the Java Home. Also we will configure HBase to manage it's Zookeper Instance. Open the hbase-env.sh file and append the lines to the file.
+vi hbase-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export HBASE_MANAGES_ZK=true
+export HBASE_REGIONSERVERS=/usr/local/hbase/conf/regionservers
+export HBASE_PID_DIR=/var/hbase/pids
+
+Configure PermSize is no longer supported in Java 8. hbase-env.sh states:
+The hbase configurations include PermSize set to 128m by default in the conf/hbase-env.sh file. Just find out these two lines.
+export HBASE_MASTER_OPTS="$HBASE_MASTER_OPTS -XX:PermSize=128m -XX:MaxPermSize=128m"
+export HBASE_REGIONSERVER_OPTS="$HBASE_REGIONSERVER_OPTS -XX:PermSize=128m -XX:MaxPermSize=128m"
+Remove or comment them.
+
+Next we will configure the site specific properties of HBase in the file, hbase-site.xml. 
+vi hbase-site.xml
+<configuration>
+<property>
+<name>hbase.rootdir</name>
+<value>hdfs://namenode1:10001/hbase</value>
+</property>
+<property>
+<name>hbase.cluster.distributed</name>
+<value>true</value>
+</property>
+<property>
+<property> 
+<name>hbase.master</name> 
+<value>namenode1:60010</value> 
+</property>
+<name>hbase.zookeeper.property.dataDir</name>
+<value>hdfs://namenode1:10001/zookeeper</value>
+</property>
+<property>
+<name>hbase.zookeeper.quorum</name>
+<value>namenode1</value>
+</property>
+<property>
+<name>hbase.zookeeper.property.clientPort</name>
+<value>2181</value>
+</property>
+</configuration>
+
+Next we have to list down DataNodes which will host the Region Servers, in the file regionservers.
+vi regionservers
+datanode1
+datanode2
+
+
+Region Server Setup:
+Now we have to configure our DataNodes to act as Region Servers. In our case we have two DataNodes. We will secure copy the hbase directory with the binaries and configuration files from the NameNode to the DataNodes.
+cd /usr/local
+scp -r hbase datanode1:/usr/local
+scp -r hbase datanode2:/usr/local
+
+Next we need to update the Environment configuration of HBase in all the DataNodes. Append the below two lines in the .bashrc files in both the DataNodes.
+vi ~/.bashrc
+export HBASE_HOME=/usr/local/hbase
+export PATH=$PATH:$HBASE_HOME/bin
+export CLASSPATH=$CLASSPATH:/usr/local/hbase/lib/*:.
+Save and exit the above file from editor and execute the below command to source the environment file
+source ~/.bashrc
+
+Repeat the above step for all the other DataNodes.
+Well we are done with the installation & configuration. So it's time to start the HBase services.
+$HBASE_HOME/bin/start-hbase.sh
+
+Let us validate the services running in NameNode as well as in the DataNodes.
+jps - HMaster(namenode), HQuorumPeer(namenode)
+jps - HRegionServer(datanode)
+
+Quickly validate the installation.
+hbase version
+HBase 1.2.3
+Source code repository git://kalashnikov.att.net/Users/stack/checkouts/hbase.git.commit revision=bd63744624a26dc3350137b564fe746df7a721a4
+Compiled by stack on Mon Aug 29 15:13:42 PDT 2016
+From source with checksum 0ca49367ef6c3a680888bbc4f1485d18
+
+Now let us start HBase shell and check some commands.
+$HBASE_HOME/bin/hbase shell
+hbase(main):001:0> status
+1 active master, 0 backup masters, 2 servers, 0 dead, 1.0000 average load
+hbase(main):002:0> list
+TABLE
+0 row(s) in 0.0610 seconds
+=> []
+hbase(main):003:0> exit
+
+Web UI-http://namenode1:16010/master-status
+
+
+Configure EdgeNode to access HBase
+Let us configure of EdgeNode or Client Node to access HBase. Logon to the EdgeNode & secure copy the HBase directory from the NameNode.
+hadoop@edgenode:~$ sudo scp -r hadoop@namenode1:/usr/local/hbase /usr/local/
+hadoop@edgenode:~$ sudo chmod -R 775 /usr/local/hbase/
+hadoop@edgenode:~$ sudo chown -R hadoop /usr/local/hbase/
+
+After that we will set the environment variables accordingly.
+vi ~/.bashrc
+export HBASE_HOME=/usr/local/hbase
+export PATH=$PATH:$HBASE_HOME/bin
+export CLASSPATH=$CLASSPATH:/usr/local/hbase/lib/*:.
+Save and exit the above file from editor and execute the below command to source the environment file
+source ~/.bashrc
+
+Next login to HBase shell. We will create table with family columns, put some data in the table scan and get the data etc.
+$HBASE_HOME/bin/hbase shell

@@ -1,0 +1,17 @@
+>>> sc
+<SparkContext master=spark://namenode1:7077 appName=PySparkShell>
+>>> import readline,rlcompleter
+>>> readline.parse_and_bind('tab: complete')
+>>> sc.parallelize(range(100))
+ParallelCollectionRDD[15] at parallelize at PythonRDD.scala:480
+>>> rdd = sc.textFile ("hdfs:/user/hive/warehouse/climate/climate.txt")
+>>> rdd.count()
+4496263                                                                         
+
+
+
+
+http://namenode1:8080/#completed-app
+
+
+

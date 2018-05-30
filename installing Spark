@@ -1,0 +1,80 @@
+Installing Spark on the hadoop cluster
+
+Master Server Setup
+
+We will configure our cluster to host the Spark Master Server in our NameNode & Slaves in our DataNodes. Lets ssh login to our NameNode & start the Spark installation. Select the Hadoop Version Compatible Spark Stable Release from the below link
+http://spark.apache.org/downloads.html
+At the time of writing this article, Spark 2.0.0 is the latest stable version. We will install Spark under /usr/local/ directory. 
+
+sudo mount -t vboxsf softwares /softwares
+Enter the password for sudo user.
+
+wget http://www-us.apache.org/dist/spark/spark-2.0.0/spark-2.0.0-bin-hadoop2.7.tgz
+tar -xzvf spark-2.0.0-bin-hadoop2.7.tgz
+sudo mv spark-2.2.0-bin-hadoop2.7/ /usr/local/spark
+sudo chmod -R 775 /usr/local/spark/
+sudo chown -R hadoop /usr/local/spark/
+
+Set the Spark environment variables in .bashrc file. Append below lines to the file and source the environment file.
+vi ~/.bashrc
+export SPARK_HOME=/usr/local/spark
+export PATH=$PATH:$SPARK_HOME/bin
+
+Save the above file and run below command to refresh the variables
+source ~/.bashrc
+
+Next we need to configure Spark environment script in order to set the Java Home & Hadoop Configuration Directory. Copy the template file and then open spark-env.sh file and append the lines to the file.
+cd $SPARK_HOME/conf
+cp spark-env.sh.template spark-env.sh
+
+Make changes to the above spark environment file:
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+export SPARK_WORKER_CORES=6
+
+Next we have to list down DataNodes which will act as the Slave server. Open the slaves file & add the datanode hostnames. In our case we have two data nodes.
+vi slaves
+datanode1
+datanode2
+
+
+Slave Server Setup
+
+Now we have to configure our DataNodes to act as Slave Servers. In our case we have two DataNodes. We will secure copy the spark directory with the binaries and configuration files from the NameNode to the DataNodes.
+cd /usr/local 
+scp -r spark datanode1:/usr/local
+scp -r spark datanode2:/usr/local
+
+Next we need to update the Environment configuration of Spark in all the DataNodes. Append the below two lines in the .bashrc files in both the DataNodes.
+vi ~/.bashrc
+export SPARK_HOME=/usr/local/spark
+export PATH=$PATH:$SPARK_HOME/bin
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export PATH=$PATH:$JAVA_HOME/bin
+source ~/.bashrc
+
+Repeat the above step for all the other DataNodes. Well we are done with the installation & configuration. So it's time to start the SPARK services.
+. $SPARK_HOME/sbin/start-all.sh
+
+Let us validate the services running in NameNode as well as in the DataNodes.
+On the namenode:
+jps - Master
+On the datanode:
+jps - Worker
+
+
+On the gatewaynode/edgenode:
+For the namenode run the following command:
+sudo scp -r spark hadoop@edgenode:/home/hadoop
+On the gatewaynode run the below commands:
+sudo mv spark/ /usr/local/spark
+sudo chmod -R 775 /usr/local/spark/
+sudo chown -R hadoop /usr/local/spark/
+
+
+Browse the Spark Master UI for details about the cluster resources (like CPU, memory), worker nodes, running application, segments, etc. at http://10.0.0.1:8080/
+In our case we have setup the NameNode as Spark Master Node. Also the Spark Application UI is available at http://10.0.0.1:4040. 
+
+So we have finally installed SPARK in distributed Hadoop Yarn. 
+
+

@@ -1,0 +1,76 @@
+First we will ssh login to our EdgeNode. We will install FLUME in the same base directory path where we already have our Hadoop binaries & configuration files and all other client tools in /usr/local. Later we will look into a use-case with HDFS as our Sink.
+
+Next, we will download a recent stable release of FLUME from the below Apache site:
+http://www-us.apache.org/dist/flume/stable/
+wget http://www-us.apache.org/dist/flume/stable/apache-flume-1.8.0-bin.tar.gz
+hadoop@edgenode:~$ tar -xvzf /softwares/apache-flume-1.8.0-bin.tar.gz
+hadoop@edgenode:~$ sudo mv apache-flume-1.8.0-bin/ /usr/local/flume
+hadoop@edgenode:~$ sudo chmod -R 775 /usr/local/flume/
+hadoop@edgenode:~$ sudo chown -R hadoop /usr/local/flume/
+
+
+Next we will set the FLUME Environment variables in the .bashrc file. Append the below lines, save and quit.
+vi ~/.bashrc
+export FLUME_HOME=/usr/local/flume
+export PATH=$PATH:$FLUME_HOME/bin
+export CLASSPATH=$CLASSPATH:/usr/local/flume/lib/*:.
+Save and exit the above file from editor and execute the below command to source the environment file
+source ~/.bashrc
+
+Next we need to set the JAVA_HOME in the flume environment file.
+cd /usr/local/flume/conf
+cp flume-env.sh.template flume-env.sh
+
+Open the file flume-env.sh and set the JAVA_HOME as below:
+vi flume-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+
+Now let us validate flume is installed properly:
+hadoop@edgenode:/usr/local/flume/conf$ flume-ng version
+Flume 1.8.0
+Source code repository: https://git-wip-us.apache.org/repos/asf/flume.git
+Revision: 99f591994468633fc6f8701c5fc53e0214b6da4f
+Compiled by denes on Fri Sep 15 14:58:00 CEST 2017
+From source with checksum fbb44c8c8fb63a49be0a59e27316833d
+
+Finally we have installed and configured FLUME. Now let us create a simple flume config file to gather some streaming data.
+Flume Configuration
+
+Let us create a sample Flume Agent Configuration. Flume configuration file is a Java property file with key-value pairs. Since we can have multiple agents in Flume, we will configure each agent based on their unique name agent. In order to configure an agent we need to define the Source, Sink & the Channel. We will also bind the Source & Sink to this Channel. Lets take a Sequence Generator Source for our testing purpose. This test source actually generates the events ( generates number starting with 0 and increments by 1 ) continuously.
+
+vi $FLUME_HOME/conf/SeqGenAgent.conf
+# Naming the components of the current agent.
+SeqGen.sources = SeqSource
+SeqGen.sinks = HDFS
+SeqGen.channels = MemChannel
+# Source Configuration
+SeqGen.sources.SeqSource.type = seq
+# Sink Configuration
+SeqGen.sinks.HDFS.type = hdfs
+SeqGen.sinks.HDFS.hdfs.path = /flume_analytics/seqgen_data
+SeqGen.sinks.HDFS.hdfs.fileType = DataStream
+SeqGen.sinks.HDFS.hdfs.rollCount = 10000
+# Channel Configuration
+SeqGen.channels.MemChannel.type = memory
+# Bind Source & Sink to the Channel 
+SeqGen.sources.SeqSource.channels = MemChannel
+SeqGen.sinks.HDFS.channel = MemChannel
+
+Before we start the Flume agent, lets us create the destination directory in HDFS.
+hadoop@edgenode:/usr/local/flume/conf$ hadoop fs -mkdir -p /flume_analytics
+hadoop@edgenode:/usr/local/flume/conf$ hadoop fs -mkdir -p /flume_analytics/seqgen_data
+
+flume-ng agent --conf $FLUME_HOME/conf/ -f $FLUME_HOME/conf/SeqGenAgent.conf -n SeqGen
+
+Once it starts successfully, lets check HDFS file system to validate whether the generated logs events have been successfully collected & written by Flume. Open another session & ssh login to the EdgeNode to validate the results.
+
+hadoop fs -ls /flume_analytics/seqgen_data
+#Sample Output
+/flume_analytics/seqgen_data/FlumeData.1473598922914
+/flume_analytics/seqgen_data/FlumeData.1473598922915
+/flume_analytics/seqgen_data/FlumeData.1473598922916
+...
+
+hadoop@edgenode:/usr/local/flume/conf$ hadoop fs -tail /flume_analytics/seqgen_data/FlumeData.1525854177650
+
+We have successfully completed configuring our first flume agent. Lets now finally stop the agent running in our previous shell session using Ctrl+Z or ctrl+c

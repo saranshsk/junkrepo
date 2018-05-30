@@ -1,0 +1,26 @@
+First we will ssh login to our EdgeNode. Before installing PIG, we already have a release of Hadoop installed and configured. We will install PIG in the same base directory path where we already have our Hadoop binaries & configuration files and all other client tools in /usr/local.
+
+Next, we will download a recent stable release of PIG from the below Apache site:
+http://www-us.apache.org/dist/pig/pig-0.16.0/
+Next follow the Installation steps as below:
+
+wget http://www-us.apache.org/dist/pig/pig-0.16.0/pig-0.16.0.tar.gz
+tar -xzvf pig-0.16.0.tar.gz >> /dev/null
+sudo mv pig-0.16.0 /usr/local/pig
+sudo chmod -R 775 /usr/local/pig
+sudo chown -R hadoop /usr/local/pig
+
+Next we will set the PIG Environment variables in the .bashrc file. Append the below lines, save and quit.
+vi ~/.bashrc
+export PIG_HOME=/usr/local/pig
+export PATH=$PATH:$PIG_HOME/bin
+export CLASSPATH=$CLASSPATH:/usr/local/pig/lib/*:.
+export PIG_CLASSPATH=/usr/local/hadoop/etc/hadoop
+
+Source the environment file.
+source ~/.bashrc
+
+Now let us validate pig is installed properly:
+pig -version
+
+Finally we have installed and configured PIG. Now let us write some simple pig latin scripts and validate the execution. 

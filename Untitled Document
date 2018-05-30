@@ -1,0 +1,163 @@
+hadoop fs -mkdir /hadoopdata
+  173  hadoop fs -ls /
+  174  hadoop fs -mkdir /hadoopdata/rawdata
+  175  hadoop fs -copyFromLocal /softwares/data_files/climate.txt /hadoopdata/rawdata
+  176  cat ~/.bashrc
+  177  ls -ltr /usr/local/
+  178  sudo mkdir /usr/local/hive
+  179  chmod -R 777 /usr/local/hive/
+  180  sudo chmod -R 777 /usr/local/hive/
+  181  sudo chown -R hadoop /usr/local/hive/
+  182  ls -ltr /usr/local/hive/
+  183  ls -ltr /usr/local/
+  184  sudo chgrp -R hadoop /usr/local/hive/
+  185  ls -ltr /usr/local/
+
+
+
+
+slf4j class path contains multiple slf4j bindings. hive:
+
+you need to delete these jar files binding between Hadoop and Hive
+
+    rm lib/hive-jdbc-2.0.0-standalone.jar
+    rm lib/log4j-slf4j-impl-2.4.1.jar
+
+
+
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export HIVE_PREFIX=/usr/local/hive
+
+
+  $ $HADOOP_HOME/bin/hadoop fs -mkdir       /tmp
+  $ $HADOOP_HOME/bin/hadoop fs -mkdir       /user/hive/warehouse
+  $ $HADOOP_HOME/bin/hadoop fs -chmod g+w   /tmp
+  $ $HADOOP_HOME/bin/hadoop fs -chmod g+w   /user/hive/warehouse
+
+
+
+hadoop fs -mkdir /tmp
+  228  hadoop fs -mkdir /user/hive/warehouse
+  229  hadoop fs -mkdir /hive
+  230  hadoop fs -mkdir /hive/warehouse
+  231  hadoop fs -ls /
+  232  schematool -dbType <derby> -initSchema
+  233  schematool -dbType derby -initSchema
+  234  hiveserver2 
+  235  gedit hive-config.sh 
+  236  hive
+  237  beeline -u jdbc:hive2://localhost:10000
+  238  ls -ltr
+  239  date
+  240  schematool -dbType derby -initSchema
+  241  ls -l |grep meta
+  242  rmdir metastore_db/
+  243  ls -ltr
+  244  rmdir -rf metastore_db/
+  245  rmdir -f metastore_db/
+  246  rm -rf metastore_db/
+  247  ls -ltr
+  248  schematool -dbType derby -initSchema
+  249  ls -ltr
+  250  hive
+  251  history
+
+
+
+
+
+
+hive --service hiveserver2 --hiveconf hive.server2.thrift.port=10000 --hiveconf hive.root.logger=INFO,console
+
+
+
+
+2018-04-17T13:36:44,585  WARN [HiveServer2-Handler-Pool: Thread-38] thrift.ThriftCLIService: Error opening session: 
+org.apache.hive.service.cli.HiveSQLException: Failed to open new session: java.lang.RuntimeException: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hadoop is not allowed to impersonate anonymous
+
+
+
+
+
+Logging initialized using configuration in jar:file:/usr/local/hive/lib/hive-common-2.2.0.jar!/hive-log4j2.properties Async: true
+Exception in thread "main" java.lang.RuntimeException: org.apache.hadoop.hdfs.server.namenode.SafeModeException: Cannot create directory /tmp/hive/hadoop/dd413739-f99c-4ba3-bcf3-87d2738532c1. Name node is in safe mode.
+The reported blocks 0 needs additional 14 blocks to reach the threshold 0.9990 of total blocks 15.
+The number of live datanodes 2 has reached the minimum number 0. Safe mode will be turned off automatically once the thresholds have been reached.
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.newSafemodeException(FSNamesystem.java:1372)
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.checkNameNodeSafeMode(FSNamesystem.java:1360)
+	at org.apache.hadoop.hdfs.server.namenode.FSNamesystem.mkdirs(FSNamesystem.java:2969)
+	at org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.mkdirs(NameNodeRpcServer.java:1078)
+	at org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolServerSideTranslatorPB.mkdirs(ClientNamenodeProtocolServerSideTranslatorPB.java:637)
+	at org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos$ClientNamenodeProtocol$2.callBlockingMethod(ClientNamenodeProtocolProtos.java)
+
+==============================================================================================================================
+
+hadoop@namenode1:/usr/local/hive/bin$ hadoop dfsadmin -safemode leave
+DEPRECATED: Use of this script to execute hdfs command is deprecated.
+Instead use the hdfs command for it.
+
+Safe mode is OFF
+hadoop@namenode1:/usr/local/hive/bin$ hadoop fs -mkdir /18apr
+
+
+==============================================================================================================================
+
+hadoop@namenode1:/usr/local/hadoop/sbin$ schematool -initSchema -dbType derby
+Metastore connection URL:	 jdbc:derby:;databaseName=metastore_db;create=true
+Metastore Connection Driver :	 org.apache.derby.jdbc.EmbeddedDriver
+Metastore connection User:	 APP
+Starting metastore schema initialization to 2.1.0
+Initialization script hive-schema-2.1.0.derby.sql
+Error: FUNCTION 'NUCLEUS_ASCII' already exists. (state=X0Y68,code=30000)
+org.apache.hadoop.hive.metastore.HiveMetaException: Schema initialization FAILED! Metastore state would be inconsistent !!
+Underlying cause: java.io.IOException : Schema script failed, errorcode 2
+Use --verbose for detailed stacktrace.
+*** schemaTool failed ***
+
+hadoop@namenode1:/usr/local/hive/bin$ rm -rf metastore_db
+
+hadoop@namenode1:/usr/local/hive$ schematool -initSchema -dbType derby
+Metastore connection URL:	 jdbc:derby:;databaseName=metastore_db;create=true
+Metastore Connection Driver :	 org.apache.derby.jdbc.EmbeddedDriver
+Metastore connection User:	 APP
+Starting metastore schema initialization to 2.1.0
+Initialization script hive-schema-2.1.0.derby.sql
+Initialization script completed
+schemaTool completed
+==============================================================================================================================
+
+CREATE TABLE 3cols (WBAN string,Date1 string,Time string) Row format delimited  Fields terminated by ','; 
+
+LOAD DATA INPATH '/home/hadoop/stage1/3cols.txt' INTO table 3cols;
+
+hadoop fs -copyFromLocal /home/hadoop/stage1/3cols.txt /rawdata
+hive> LOAD DATA INPATH '/home/hadoop/stage1/3cols.txt' INTO table 3cols;
+FAILED: SemanticException Line 1:17 Invalid path ''/home/hadoop/stage1/3cols.txt'': No files matching path hdfs://namenode1:10001/home/hadoop/stage1/3cols.txt
+hive> LOAD DATA INPATH '/rawdata/3cols.txt' INTO table 3cols;
+Loading data to table default.3cols
+OK
+Time taken: 1.323 seconds
+==============================================================================================================================
+
+CREATE TABLE 3cols (WBAN int,Date1 int,Time int) Row format delimited  Fields terminated by ','; 
+
+LOAD DATA INPATH '/home/hadoop/stage1/3cols.txt' INTO table 3cols;
+
+
+
+    <property>
+        <name>hive.sentry.conf.url</name>
+        <value>file:/usr/local/hive/conf/sentry-site.xml</value>
+    </property>
+
+
+
+
+
+hadoop@namenode1:/usr/local/hive/bin$ beeline -u jdbc:hive2://localhost:10000 -n hadoop
+Connecting to jdbc:hive2://localhost:10000
+18/04/21 09:29:54 [main]: WARN jdbc.HiveConnection: Failed to connect to localhost:10000
+Error: Could not open client transport with JDBC Uri: jdbc:hive2://localhost:10000: Failed to open new session: java.lang.RuntimeException: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hadoop is not allowed to impersonate hadoop (state=08S01,code=0)
+Beeline version 2.2.0 by Apache Hive
+
+

@@ -1,0 +1,110 @@
+Data Processing Task
+
+We are going to leverage Pig application as an ETL tool to extract data from a source, transform it according to our requirements and finally load it into a datastore. We will perform the following data manipulation operations using Pig Latin
+    LOAD two sample datasets from the file system
+    FILTER tuples from one dataset
+    JOIN two datasets
+    Performs transformations on FOREACH row in the data
+    STORE the results to the file system
+    GROUP the data into another output dataset
+    DUMP or display the cummulative results to screen 
+
+Data Preparation:
+First let us prepare two dummy datasets like below. We would first load two datasets into pig; One is the Q1 Profit of a company & another is the Currency exchange rate. We will perform filter operations to exclude new operating company AUSTRALIA from the Profit dataset. Next we will perform a JOIN & Calculate the Profit Amount for all countries in terms of USD and store the result. Additionally we will add load date as current date as a meta data column. Further we will generate an additional dataset to show the Max,Min,Average,Sum of the Q1 profit for the company and display in screen.
+
+Profit_Q1.txt
+Country|Date|Profit|Currency
+INDIA|2016-01-31|4500000|INR
+US|2016-01-31|9000000|USD
+SINGAPORE|2016-01-31|7000000|SGD
+AUSTRALIA|2016-01-31||AUD
+INDIA|2016-02-29|4900000|INR
+US|2016-02-29|8900000|USD
+SINGAPORE|2016-02-29|7100000|SGD
+AUSTRALIA|2016-02-29||AUD
+INDIA|2016-03-31|5000000|INR
+US|2016-03-31|9100000|USD
+SINGAPORE|2016-03-31|7200000|SGD
+AUSTRALIA|2016-03-31||AUD
+INDIA|2016-04-30|4800000|INR
+US|2016-04-30|8900000|USD
+SINGAPORE|2016-04-30|7300000|SGD
+AUSTRALIA|2016-04-30||AUD
+
+Exchange_Rate.csv
+Exc_Date,From,To,Rate
+2016-01-31,INR,USD,0.0147
+2016-01-31,SGD,USD,0.702
+2016-02-29,INR,USD,0.0146
+2016-02-29,SGD,USD,0.711
+2016-03-31,INR,USD,0.015
+2016-03-31,SGD,USD,0.742
+2016-04-30,INR,USD,0.015
+2016-04-30,SGD,USD,0.7439
+
+Lets load this sample data first to local system and further put the files into HDFS. Follow the commands as below:
+echo "Country|Date|Profit|Currency
+INDIA|2016-01-31|4500000|INR
+US|2016-01-31|9000000|USD
+SINGAPORE|2016-01-31|7000000|SGD
+AUSTRALIA|2016-01-31||AUD
+INDIA|2016-02-29|4900000|INR
+US|2016-02-29|8900000|USD
+SINGAPORE|2016-02-29|7100000|SGD
+AUSTRALIA|2016-02-29||AUD
+INDIA|2016-03-31|5000000|INR
+US|2016-03-31|9100000|USD
+SINGAPORE|2016-03-31|7200000|SGD
+AUSTRALIA|2016-03-31||AUD
+INDIA|2016-04-30|4800000|INR
+US|2016-04-30|8900000|USD
+SINGAPORE|2016-04-30|7300000|SGD
+AUSTRALIA|2016-04-30||AUD" >> Profit_Q1.txt
+
+echo "Exc_Date,From,To,Rate
+2016-01-31,INR,USD,0.0147
+2016-01-31,SGD,USD,0.702
+2016-02-29,INR,USD,0.0146
+2016-02-29,SGD,USD,0.711
+2016-03-31,INR,USD,0.015
+2016-03-31,SGD,USD,0.742
+2016-04-30,INR,USD,0.015
+2016-04-30,SGD,USD,0.7439" >> Exchange_Rate.csv
+
+Uploading the files to hdfs directory:
+hadoop fs -mkdir /pig_analytics
+hadoop fs -copyFromLocal /home/hadoop/Profit_Q1.txt /pig_analytics
+hadoop fs -copyFromLocal /home/hadoop/Exchange_Rate.csv /pig_analytics
+
+pig_script.pig
+/* Script to Process Profit Analysis */
+-- Extract Source Profit Data
+in_profit = LOAD 'hdfs:/pig_analytics/Profit_Q1.txt' USING PigStorage('|') AS (country:chararray, date:chararray, profit:float, currency:chararray);
+-- Filter Header & country not Australia
+profit = FILTER in_profit BY (country != 'Country') AND (country != 'AUSTRALIA');
+-- Extract Currency Exchange Data
+in_xrate = LOAD 'hdfs:/pig_analytics/Exchange_Rate.csv' USING PigStorage(',') AS (exc_date:chararray, from_cur:chararray, to_cur:chararray, rate:float);
+-- Filter Header
+xrate = FILTER in_xrate BY (exc_date != 'Exc_Date');
+-- Join dataset based on date & source currency
+profit_xrate = JOIN profit BY (date, currency) LEFT OUTER, xrate BY (exc_date, from_cur);
+-- Calculate conversion amount
+profit_rate = FOREACH profit_xrate GENERATE $0 AS country, $3 AS curr, $1 AS date, $2 AS profit_base, $2 * ($7 IS NULL ? 1: $7) AS profit_usd, ToString(CurrentTime(),'yyyy-MM-dd') AS load_date;
+-- Load final detail data into HDFS
+STORE profit_rate INTO 'hdfs:/pig_analytics/out_profit_Q1_dtl' USING PigStorage (',');
+-- Group dataset by Country
+profit_by_country = GROUP profit_rate BY country;
+-- Perform Aggregate operations based on Groups
+profit_country = FOREACH profit_by_country GENERATE group as country, MIN(profit_rate.date) AS st_date, MAX(profit_rate.date) AS end_date, SUM(profit_rate.profit_usd) AS total_profit, AVG(profit_rate.profit_usd) AS avg_profit, ToString(CurrentTime(),'yyyy-MM-dd') AS load_date;
+-- Load final summary data into HDFS
+STORE profit_country INTO 'hdfs:/pig_analytics/out_profit_Q1' USING PigStorage (',');
+
+Executing the script:
+pig
+grunt> exec /home/hadoop/profit_analysis.pig
+grunt> quit
+
+Let us validate the data loaded in HDFS.
+hadoop fs -ls -R /pig_analytics
+hadoop fs -cat /pig_analytics/out_profit_Q1_dtl/part-r-00000
+hadoop fs -cat /pig_analytics/out_profit_Q1/part-r-00000

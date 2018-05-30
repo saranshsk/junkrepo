@@ -1,0 +1,9 @@
+To know the status of Safemode, use command:
+hadoop dfsadmin –safemode get
+
+To enter Safemode, use command:
+bin/hadoop dfsadmin –safemode enter
+
+To come out of Safemode, use command:
+hadoop dfsadmin -safemode leave
+

@@ -1,0 +1,12 @@
+hadoop@namenode1:~$ sudo mv apache-cassandra-3.0.14/ /usr/local/cassandra
+hadoop@namenode1:~$ sudo chmod -R 775 /usr/local/cassandra/
+hadoop@namenode1:~$ sudo chown -R hadoop /usr/local/cassandra/
+
+vi ~/.bashrc
+export CASSANDRA_HOME=/usr/local/cassandra
+
+hadoop@namenode1:/usr/local/cassandra$ sudo mkdir /usr/local/cassandra/data
+hadoop@namenode1:/usr/local/cassandra$ sudo mkdir /usr/local/cassandra/commitlog
+hadoop@namenode1:/usr/local/cassandra$ sudo mkdir /usr/local/cassandra/saved_caches
+
+
