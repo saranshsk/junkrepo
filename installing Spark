@@ -1,11 +1,9 @@
 Installing Spark on the hadoop cluster
 
-Master Server Setup
-
+Master Server Setup:
 We will configure our cluster to host the Spark Master Server in our NameNode & Slaves in our DataNodes. Lets ssh login to our 
-NameNode & start the Spark installation. Select the Hadoop Version Compatible Spark Stable Release from the below link
+NameNode & start with the Spark installation. Select the Hadoop Version Compatible Spark Stable Release from the below link
 http://spark.apache.org/downloads.html
-At the time of writing this article, Spark 2.0.0 is the latest stable version. We will install Spark under /usr/local/ directory. 
 
 sudo mount -t vboxsf softwares /softwares
 Enter the password for sudo user.
@@ -16,7 +14,6 @@ sudo mv spark-2.2.0-bin-hadoop2.7/ /usr/local/spark
 sudo chmod -R 775 /usr/local/spark/
 sudo chown -R hadoop /usr/local/spark/
 sudo chgrp -R hadoop /usr/local/spark/
-
 
 Set the Spark environment variables in .bashrc file. Append below lines to the file and source the environment file.
 vi ~/.bashrc
